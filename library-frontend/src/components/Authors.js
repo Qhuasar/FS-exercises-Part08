@@ -19,9 +19,11 @@ const Authors = (props) => {
 
   const handleUpdate = (e) => {
     e.preventDefault()
-    editAuthor({ variables: { name, setBornTo: parseInt(birthDate, 10) } })
-    setName("")
-    setBirthDate("")
+    if (!(name === null)) {
+      editAuthor({ variables: { name, setBornTo: parseInt(birthDate, 10) } })
+      setName("")
+      setBirthDate("")
+    }
   }
 
   return (
@@ -46,11 +48,14 @@ const Authors = (props) => {
       <form onSubmit={(e) => handleUpdate(e)}>
         <h1>Update Birth Date</h1>
         <label>name</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        ></input>
+        <select value={name} onChange={(e) => setName(e.target.value)}>
+          <option value={null}>...</option>
+          {authors.data.allAuthors.map((a) => (
+            <option key={a.name} value={a.name}>
+              {a.name}
+            </option>
+          ))}
+        </select>
         <p />
         <label>date</label>
         <input
