@@ -100,7 +100,6 @@ const resolvers = {
       const books = await Book.find({}).populate("author")
       const returnAuthor = authors.map((author) => {
         const bookCount = books.reduce((total, curr_book) => {
-          console.log("currBook:  ", curr_book)
           if (curr_book.author.name === author.name) return total + 1
           return total
         }, 0)
@@ -126,7 +125,6 @@ const resolvers = {
         })
       }
       let author = await Author.findOne({ name: args.author })
-      console.log(author)
       if (!author) {
         try {
           author = new Author({ name: args.author })
@@ -190,7 +188,6 @@ const resolvers = {
     },
     login: async (root, args) => {
       const user = await User.findOne({ username: args.username })
-      console.log(user)
       if (!user || args.password !== "password") {
         throw new GraphQLError("wrong credentials", {
           extensions: {
@@ -218,10 +215,21 @@ startStandaloneServer(server, {
   listen: { port: 4000 },
   context: async ({ req, res }) => {
     const auth = req ? req.headers.authorization : null
-    if (auth && auth.startsWith("bearer ")) {
-      const decodedToken = jwt.verify(auth.substring(7), process.env.SECRET)
-      const currentUser = await User.findById(decodedToken.id)
-      return { currentUser }
+    if (auth && auth.startsWith("Bearer ")) {
+      try {
+        const decodedToken = jwt.verify(auth.substring(7), process.env.SECRET)
+        console.log(decodedToken)
+        const currentUser = await User.findById(decodedToken.id)
+        return { currentUser }
+      } catch (error) {
+        throw new GraphQLError("wrong credentials", {
+          extensions: {
+            code: "INVALID_TOKEN",
+            invalidArgs: auth,
+            error,
+          },
+        })
+      }
     }
   },
 }).then(({ url }) => {
