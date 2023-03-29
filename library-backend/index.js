@@ -8,6 +8,7 @@ const {
   ApolloServerPluginDrainHttpServer,
 } = require("@apollo/server/plugin/drainHttpServer")
 const { makeExecutableSchema } = require("@graphql-tools/schema")
+const User = require("./models/User")
 const express = require("express")
 const cors = require("cors")
 const http = require("http")
@@ -24,17 +25,19 @@ mongoose
     console.log("error connection to MongoDB:", error.message)
   })
 
+
+
 const start = async () => {
   const app = express()
   const httpServer = http.createServer(app)
 
-   const wsServer = new WebSocketServer({
-     server: httpServer,
-     path: "/",
-   })
+  const wsServer = new WebSocketServer({
+    server: httpServer,
+    path: "/",
+  })
 
-   const schema = makeExecutableSchema({ typeDefs, resolvers })
-   const serverCleanup = useServer({ schema }, wsServer)
+  const schema = makeExecutableSchema({ typeDefs, resolvers })
+  const serverCleanup = useServer({ schema }, wsServer)
 
   const server = new ApolloServer({
     schema,
@@ -52,7 +55,6 @@ const start = async () => {
     ],
   })
 
-
   await server.start()
 
   app.use(
@@ -63,10 +65,7 @@ const start = async () => {
       context: async ({ req }) => {
         const auth = req ? req.headers.authorization : null
         if (auth && auth.startsWith("Bearer ")) {
-          const decodedToken = jwt.verify(
-            auth.substring(7),
-            process.env.SECRET
-          )
+          const decodedToken = jwt.verify(auth.substring(7), process.env.SECRET)
           const currentUser = await User.findById(decodedToken.id)
           return { currentUser }
         }
@@ -82,6 +81,3 @@ const start = async () => {
 }
 
 start()
-
-
-

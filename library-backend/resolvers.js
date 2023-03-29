@@ -103,6 +103,7 @@ const resolvers = {
         { born: args.setBornTo },
         { new: true, runValidators: true }
       )
+
       return author
     },
 
