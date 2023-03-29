@@ -1,8 +1,10 @@
+import { useApolloClient, useSubscription } from "@apollo/client"
 import { useState } from "react"
 import Authors from "./components/Authors"
 import Books from "./components/Books"
 import LoginForm from "./components/Login"
 import NewBook from "./components/NewBook"
+import { ALL_BOOKS, BOOK_ADDED } from "./queries"
 
 const LogoutBtn = ({ setPage }) => {
   const logout = (event) => {
@@ -21,8 +23,33 @@ const LoggedInBtns = ({ setPage }) => {
   )
 }
 
+const updateCache = (cache, query, bookAdded) => {
+  const uniqByTitle = (a) => {
+    let seen = new Set()
+    return a.filter((item) => {
+      let k = item.title
+      return seen.has(k) ? false : seen.add(k)
+    })
+  }
+
+  cache.updateQuery(query, ({ allBooks }) => {
+    return {
+      allBooks: uniqByTitle(allBooks.concat(bookAdded)),
+    }
+  })
+}
+
 const App = () => {
   const [page, setPage] = useState("authors")
+  const client = useApolloClient()
+
+  useSubscription(BOOK_ADDED, {
+    onData: ({ data }) => {
+      const bookAdded = data.data.bookAdded
+      alert(`${bookAdded.title} was added`)
+      updateCache(client.cache, { query: ALL_BOOKS }, bookAdded)
+    },
+  })
 
   return (
     <div>
